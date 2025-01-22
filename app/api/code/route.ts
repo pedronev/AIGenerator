@@ -2,11 +2,17 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server"; 
 import { OpenAI } from "openai";
+import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 
 // Initialize OpenAI API client with the API key directly
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+const instrucctionMessage: ChatCompletionMessageParam = {
+  role: "system",
+  content: "You are a code generator. You must answer only in markdown code snippets. Use code comments for explanations.",
+};
 
 export async function POST(req: Request) {
   try {
@@ -35,14 +41,14 @@ export async function POST(req: Request) {
     // Create the OpenAI chat completion request
 const chatCompletion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
-      messages,
+      messages: [instrucctionMessage, ...messages],
     });
 
     // Return the AI response
      return NextResponse.json(chatCompletion.choices[0].message);
 
   } catch (error) {
-    console.log("[conversation_error]", error);
+    console.log("[code_error]", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }
